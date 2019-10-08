@@ -7,8 +7,11 @@ import java.util.Set;
 public class FTPServer {
 
     private static final int sPort = 8000;
+    private static final String SUCCESS_RESPONSE_CODE = "SUCCESS";
+    private static final String FAILURE_RESPONSE_CODE = "FAILURE";
+
     private static Set<String> fileSet;
-    
+
     public FTPServer() {}
 
     public static void main(String[] args) throws Exception {
@@ -69,6 +72,34 @@ public class FTPServer {
             fileSet.add(fileName);
         }
 
+        private void sendFile(String fileName) throws IOException {
+            FileInputStream fileInputStream = null;
+            BufferedInputStream bufferedInputStream = null;
+            DataInputStream dataInputStream = null;
+            try {
+                File file = new File(".//files//server//" + fileName);
+                byte[] buffer = new byte[(int) file.length()];
+                fileInputStream = new FileInputStream(file);
+                bufferedInputStream = new BufferedInputStream(fileInputStream);
+                dataInputStream = new DataInputStream(bufferedInputStream);
+                dataInputStream.readFully(buffer, 0, buffer.length);
+
+                outputStream.writeObject(SUCCESS_RESPONSE_CODE);
+                outputStream.writeUTF(fileName);
+                outputStream.writeLong(buffer.length);
+                outputStream.write(buffer, 0, buffer.length);
+                outputStream.flush();
+            } catch (FileNotFoundException e) {
+                System.err.println("Cannot find file " + fileName);
+                outputStream.writeObject(FAILURE_RESPONSE_CODE);
+                outputStream.flush();
+            } finally {
+                if (null != dataInputStream) dataInputStream.close();
+                if (null != bufferedInputStream) bufferedInputStream.close();
+                if (null != fileInputStream) fileInputStream.close();
+            }
+        }
+
         public void run() {
             try {
                 outputStream = new ObjectOutputStream(connection.getOutputStream());
@@ -90,10 +121,12 @@ public class FTPServer {
                                 receiveFile(fileName);
                                 break;
 
-//                            case "get":
+                            case "get":
+                                fileName = (String) inputStream.readObject();
+                                sendFile(fileName);
+                                break;
                         
                             default:
-                                System.out.println("Unknown command. Please try again.");
                                 break;
                         }
 					} catch (ClassNotFoundException e) {
