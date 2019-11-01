@@ -61,6 +61,8 @@ public class FTPClient {
                 System.out.println("Unknown host");
             } catch (NumberFormatException e) {
                 System.out.println("Invalid input. Try again.");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -213,7 +215,6 @@ public class FTPClient {
                             System.out.println("No File name specified");
                         }
                         else {
-//                            sendMessage(command[0]);
                             uploadFile(command[1]);
                         }
                         break;
@@ -228,6 +229,10 @@ public class FTPClient {
                             String responseCode = (String) inputStream.readObject();
                             receiveFile(responseCode);
                         }
+                        break;
+                        
+                    case "ftpclient":
+                        System.out.println("Already connected to server \"" + host + ":" + port + "\"");
                         break;
 
                     default:
